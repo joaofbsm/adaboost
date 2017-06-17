@@ -14,7 +14,7 @@ import adaboost as ab
 
 
 def load_dataset(dataset_name):
-    dataset = np.genfromtxt(dataset_name, dtype = "string", delimiter = ",")
+    dataset = np.genfromtxt(dataset_name, dtype = "str", delimiter = ",")
     return dataset
 
 def output_to_integers(dataset):
@@ -40,7 +40,7 @@ def main():
 
     ada = ab.AdaBoost(dataset)
 
-    ada.boost(100)
+    ada.boost(500)
 
 
 if __name__ == "__main__":
