@@ -97,7 +97,7 @@ class AdaBoost:
 
             # Create rule based in most frequent output class per input value
             for key in ocurrences:
-                if ocurrences[key][0] >= ocurrences[key][1]:
+                if ocurrences[key][0] > ocurrences[key][1]:
                     stump[key] = 1  # Value predicts "positive" output
                 else:
                     stump[key] = -1  # Value predicts "negative" output

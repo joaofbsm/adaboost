@@ -12,7 +12,7 @@ data_frame["Accuracy"] = pd.read_csv("boosting_accuracy.csv", header=0,
 data_frame["Error"] = pd.read_csv("boosting_error.csv", header=0, index_col=0)
 
 ax.set_xlabel("Iterations")
-ax.set_ylabel("Error Percentage")
+ax.set_ylabel("Percentage")
 
 data_frame.plot(ax=ax)  # COMBINED
 #data_frame.plot(ax=ax, legend=False)  # ACCURACY ONLY
