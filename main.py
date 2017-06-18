@@ -11,37 +11,41 @@ __version__ = "3.0"
 import sys
 import numpy as np
 import adaboost as ab
-
-
-def load_dataset(dataset_name):
-    dataset = np.genfromtxt(dataset_name, dtype = "str", delimiter = ",")
-    return dataset
-
-def output_to_integers(dataset):
-    for instance in dataset:
-        if instance[-1] == "positive":
-            instance[-1] = 1
-        else:
-            instance[-1] = -1
-    return dataset
-
-def separate_attributes(dataset):
-    dataset = {
-        "input": dataset[:, 0:-1],
-        "output": dataset[:, -1].astype(int)
-    }
-    return dataset
+import data_handler as dh
 
 def main():
+    k = 5  # Number of folds
+
     # Dataset retrieving and formatting
-    dataset = load_dataset("tic-tac-toe.data")
-    dataset = output_to_integers(dataset)
-    dataset = separate_attributes(dataset)
+    dataset = dh.load_dataset("tic-tac-toe.data")
+    dataset = dh.format_outputs(dataset)
+    dataset = dh.fold_dataset(dataset, k)
 
-    ada = ab.AdaBoost(dataset)
+    cv_accuracies = []
+    cv_errors = []
+    for i in range(k):
+        print("Round:", i, "\n")
+        testing_set = dh.separate_attributes(dataset[i])
+        remaining_folds = np.concatenate(np.delete(dataset, i))
+        training_set = dh.separate_attributes(remaining_folds)
 
-    ada.boost(500)
+        ada = ab.AdaBoost(training_set, testing_set)
+        results = ada.boost(250)
 
+        cv_accuracies.append(results[0])
+        cv_errors.append(results[1])
+
+    # Convert lists to numpy arrays for faster calculations
+    cv_accuracies = np.asarray(cv_accuracies)
+    cv_errors = np.asarray(cv_errors)
+
+    # Calculate the mean of the accuracies and the errors
+    cv_accuracies = np.divide(np.sum(cv_accuracies, axis=0), k)
+    cv_errors = np.divide(np.sum(cv_errors, axis=0), k)
+
+    # Save the results to a CSV
+    dh.save_results(cv_accuracies, "boosting_accuracy")
+    dh.save_results(cv_errors, "boosting_error")
 
 if __name__ == "__main__":
     main()
