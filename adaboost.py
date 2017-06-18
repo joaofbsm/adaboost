@@ -25,8 +25,9 @@ class AdaBoost:
         
         Arguments:
             training_set -- Dataset for training in.
-            testing_set --  Dataset for testing the hypotheses
+            testing_set --  Dataset for testing the hypotheses.
         """
+
         self.training_set = training_set
         self.testing_set = testing_set
          # Number of training instances
@@ -44,24 +45,34 @@ class AdaBoost:
 
 
     def stump_error(self, stump):
-        predictions = np.zeros(self.m_tr)
+        """Returns the stump error in current weighted training set.
+        
+        Arguments:
+            stump -- Stump to be evaluated.
+        """
+
+        predictions = np.zeros(self.m_tr)  # Hypothesis for each instance
         pred_errors = np.ones(self.m_tr)  # 0 if correct, 1 if incorrect
         a = stump["attribute"]  # Attribute index in training set
         # Loop through instances
         for i in range(self.m_tr):
-            value = self.training_set["input"][i][a] 
+            value = self.training_set["input"][i][a]
             output = self.training_set["output"][i]
-            predictions[i] = stump[value]
+            predictions[i] = stump[value]  # Hypothesis for that value
             if predictions[i] == output:
                 pred_errors[i] = 0
 
+        # Should divide by the sum of the weights, but it is always 1
         error = np.sum(np.multiply(self.weights, pred_errors))
 
         return error, predictions
 
 
     def one_rule(self):
-        """Return the best decision stump for current weights."""
+        """Return the best decision stump for current weights.
+
+        Based on the one rule algorithm for weak classifiers.
+        """
 
         best_stump = {}
         lowest_error = float("inf")
@@ -103,6 +114,11 @@ class AdaBoost:
 
 
     def calculate_alpha(self, model):
+        """Calculates alpha for the error of the given(best) model.
+        
+        Attributes:
+            model = Best predicting weak learner for time t.
+        """
         error = model["error"]
         alpha = 0.5 * np.log((1 - error) / error)
         
@@ -110,8 +126,14 @@ class AdaBoost:
 
 
     def update_weights(self, model, alpha):
-        """
-        Equivalent implementations of weight calculation:
+        """Update weights for time t according to AdaBoost's formula.
+
+        Attributes:
+            model = Best predicting weak learner for time t.
+            alpha = Alpha calculated for model.
+
+        Equivalent implementations of weight calculation
+        -------------------------------------------------
 
         for i in range(self.m_tr):
             self.weights[i] = self.weights[i] * np.exp(-1 * alpha * 
@@ -139,10 +161,12 @@ class AdaBoost:
 
 
     def evaluate(self):
+        """Evaluate current strong learner with the testing set."""
+
         correct = 0
         # Loop through instances
         for i in range(self.m_ts):
-            H = 0
+            H = 0  
             for model in range(len(self.ensemble)):
                 # Get the attribute that the model is related with
                 a = self.ensemble[model]["attribute"]
@@ -151,18 +175,28 @@ class AdaBoost:
                 # Predict according to model rules
                 prediction = self.ensemble[model][value]
                 H += self.alpha[model] * prediction
-            H = np.sign(H)
+            H = np.sign(H)  # Strong model hypothesis
 
             if H == self.testing_set["output"][i]:
                 correct += 1
 
-        accuracy = (correct / self.m_ts) * 100
+        accuracy = (correct / self.m_ts) * 100  # Simple accuracy measure
         error = 100 - accuracy
 
         return accuracy, error
 
 
     def boost(self, num_iterations):
+        """The AdaBoost algorithm itself.
+        
+        Uses all the above methods together to boost the best weak learners 
+        created in every iteration, by combining them into a strong learner
+        that gets better over time.
+        
+        Arguments:
+            num_iterations -- Number of iterations in the process of boosting.
+        """
+
         accuracies = []  # Accuracy per iteration
         errors = []  # Error per iteration
         for i in range(num_iterations):
@@ -173,12 +207,6 @@ class AdaBoost:
             results = self.evaluate()
             accuracies.append(results[0])
             errors.append(results[1])
-            
-            self.update_weights(best_model, self.alpha[i])
-            print("Iteration:", i)
-        print("The accuracy for the final classifier is: ", results[0], "%", 
-          sep="")
-        print("The error for the final classifier is: ", results[1], "%\n", 
-          sep="")
-        return accuracies, errors
 
+            self.update_weights(best_model, self.alpha[i])
+        return accuracies, errors
