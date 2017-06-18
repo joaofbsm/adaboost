@@ -50,6 +50,8 @@ def separate_attributes(dataset):
 
 
 def save_results(data, file_name):
+    f = open(file_name + ".csv", "w")
+    f.close()
     for i in range(len(data)):
         with open(file_name + ".csv", "a") as f:
             f.write(str(i) + "," + str(data[i]) + "\n")

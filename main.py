@@ -30,7 +30,7 @@ def main():
         training_set = dh.separate_attributes(remaining_folds)
 
         ada = ab.AdaBoost(training_set, testing_set)
-        results = ada.boost(250)
+        results = ada.boost(500)
 
         cv_accuracies.append(results[0])
         cv_errors.append(results[1])
