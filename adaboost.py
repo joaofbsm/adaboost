@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """AdaBoost Class Structure"""
 
@@ -76,12 +75,11 @@ class AdaBoost:
 
         best_stump = {}
         lowest_error = float("inf")
-
         # Loop through attributes
         for a in range(self.n_tr):
             stump = {"attribute": a}
 
-            # Ocurrences of output class times instance weight per input value
+            # Ocurrences of output class * instance weight per input value
             ocurrences = {
                 "x": np.zeros(2),
                 "o": np.zeros(2),
@@ -190,7 +188,7 @@ class AdaBoost:
         """The AdaBoost algorithm itself.
         
         Uses all the above methods together to boost the best weak learners 
-        created in every iteration, by combining them into a strong learner
+        created in every iteration by combining them into a strong learner
         that gets better over time.
         
         Arguments:
@@ -199,8 +197,10 @@ class AdaBoost:
 
         accuracies = []  # Accuracy per iteration
         errors = []  # Error per iteration
+        model_errors = []  # Errors for the best model in each iteration
         for i in range(num_iterations):
             best_model = self.one_rule()
+            model_errors.append(best_model["error"] * 100)
             self.ensemble.append(best_model)
             self.alpha.append(self.calculate_alpha(best_model)) 
 
@@ -209,4 +209,4 @@ class AdaBoost:
             errors.append(results[1])
 
             self.update_weights(best_model, self.alpha[i])
-        return accuracies, errors
+        return accuracies, errors, model_errors

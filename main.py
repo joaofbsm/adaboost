@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """AdaBoost binary classification from scratch in Python"""
 
@@ -23,6 +22,8 @@ def main():
 
     cv_accuracies = []
     cv_errors = []
+    cv_model_errors = []
+    # Execute k-fold cross-validation
     for i in range(k):
         print("Round", i + 1)
         testing_set = dh.separate_attributes(dataset[i])
@@ -34,18 +35,22 @@ def main():
 
         cv_accuracies.append(results[0])
         cv_errors.append(results[1])
+        cv_model_errors.append(results[2])
 
     # Convert lists to numpy arrays for faster calculations
     cv_accuracies = np.asarray(cv_accuracies)
     cv_errors = np.asarray(cv_errors)
+    cv_model_errors = np.asarray(cv_model_errors)
 
     # Calculate the mean of the accuracies and the errors
     cv_accuracies = np.divide(np.sum(cv_accuracies, axis=0), k)
     cv_errors = np.divide(np.sum(cv_errors, axis=0), k)
+    cv_model_errors = np.divide(np.sum(cv_model_errors, axis=0), k)
 
     # Save the results to a CSV
     dh.save_results(cv_accuracies, "boosting_accuracy")
     dh.save_results(cv_errors, "boosting_error")
+    dh.save_results(cv_model_errors, "model_error")
 
 if __name__ == "__main__":
     main()
