@@ -9,14 +9,14 @@ __version__ = "3.0"
 
 import sys
 import numpy as np
+import time
 
 class AdaBoost:
     """Implementation of AdaBoost boosting method.
     
     AdaBoost combines weak learners to create a strong learning hypothesis.
-    In this code we use the one rule method to get the best weak learner at
-    each iteration. Our weak learners are essentially 1-level decision trees,
-    commonly known as decision stumps.
+    Our weak learners are essentially 1-level decision trees, commonly known as 
+    decision stumps.
     """
 
     def __init__(self, training_set, testing_set):
@@ -43,7 +43,7 @@ class AdaBoost:
         self.alpha = []  
 
 
-    def stump_error(self, stump):
+    def evaluate_stump(self, stump):
         """Returns the stump error in current weighted training set.
         
         Arguments:
@@ -57,7 +57,10 @@ class AdaBoost:
         for i in range(self.m_tr):
             value = self.training_set["input"][i][a]
             output = self.training_set["output"][i]
-            predictions[i] = stump[value]  # Hypothesis for that value
+            if value == stump["value"]:
+                predictions[i] = stump["state"]
+            else:
+                predictions[i] = stump["state"] * -1
             if predictions[i] == output:
                 pred_errors[i] = 0
 
@@ -67,46 +70,35 @@ class AdaBoost:
         return error, predictions
 
 
-    def one_rule(self):
+    def find_best_stump(self):
         """Return the best decision stump for current weights.
 
-        Based on the one rule algorithm for weak classifiers.
+        Creates 54 different decision stumps(9 attributes * 3 possible values
+        * 2 states[True or False] combinations). 
         """
 
         best_stump = {}
         lowest_error = float("inf")
+        possible_values = ["x", "o", "b"]
+        possible_states = [1, -1]
         # Loop through attributes
         for a in range(self.n_tr):
-            stump = {"attribute": a}
+            for value in possible_values:
+                for state in possible_states:
+                    # Instantiates stump
+                    stump = {"attribute": a}
+                    stump["value"] = value
+                    # Predict this for value or -1 * this for not value
+                    stump["state"] = state  
 
-            # Ocurrences of output class * instance weight per input value
-            ocurrences = {
-                "x": np.zeros(2),
-                "o": np.zeros(2),
-                "b": np.zeros(2)
-            }
-            # Loop through instances
-            for i in range(self.m_tr):
-                key = self.training_set["input"][i][a]
-                if self.training_set["output"][i] == 1:  # Output is "positive"
-                    ocurrences[key][0] += self.weights[i]
-                else:  # Output is "negative"
-                    ocurrences[key][1] += self.weights[i]
+                    # Calculate error for stump
+                    error, predictions = self.evaluate_stump(stump)
+                    stump["error"] = error
+                    stump["predictions"] = predictions
 
-            # Create rule based in most frequent output class per input value
-            for key in ocurrences:
-                if ocurrences[key][0] > ocurrences[key][1]:
-                    stump[key] = 1  # Value predicts "positive" output
-                else:
-                    stump[key] = -1  # Value predicts "negative" output
-
-            error, predictions = self.stump_error(stump)
-            stump["error"] = error
-            stump["predictions"] = predictions
-
-            if error < lowest_error:
-                lowest_error = error
-                best_stump = stump
+                    if error < lowest_error:
+                        lowest_error = error
+                        best_stump = stump
 
         return best_stump
 
@@ -158,7 +150,7 @@ class AdaBoost:
         self.weights = np.divide(self.weights, np.sum(self.weights))
 
 
-    def evaluate(self):
+    def evaluate_ensemble(self):
         """Evaluate current strong learner with the testing set."""
 
         correct = 0
@@ -171,7 +163,10 @@ class AdaBoost:
                 # Get the value(class) it presents in this instance
                 value = self.testing_set["input"][i][a]
                 # Predict according to model rules
-                prediction = self.ensemble[model][value]
+                if value == self.ensemble[model]["value"]:
+                    prediction = self.ensemble[model]["state"]
+                else:
+                    prediction = self.ensemble[model]["state"] * -1
                 H += self.alpha[model] * prediction
             H = np.sign(H)  # Strong model hypothesis
 
@@ -199,12 +194,12 @@ class AdaBoost:
         errors = []  # Error per iteration
         model_errors = []  # Errors for the best model in each iteration
         for i in range(num_iterations):
-            best_model = self.one_rule()
+            best_model = self.find_best_stump()
             model_errors.append(best_model["error"] * 100)
             self.ensemble.append(best_model)
             self.alpha.append(self.calculate_alpha(best_model)) 
 
-            results = self.evaluate()
+            results = self.evaluate_ensemble()
             accuracies.append(results[0])
             errors.append(results[1])
 

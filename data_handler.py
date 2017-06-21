@@ -84,7 +84,7 @@ def save_results(data, file_path):
 
     # Empties a possible previous results file 
     f = open(file_path + ".csv", "w")
-    f.close()
+    f.write("i,e\n")  # Index, Error header
     for i in range(len(data)):
         # Saves row in CSV with indexes(iterations)
         with open(file_path + ".csv", "a") as f:
